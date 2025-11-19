@@ -3,413 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高性能互动圣诞树</title>
+    <title>爸爸的奇妙乐园</title>
     <style>
-        :root {
-            --tree-green-light: #2d5a27;
-            --tree-green-dark: #1a3c16;
-            --gold: #ffd700;
-            --tool-bg: rgba(255, 255, 255, 0.15);
-        }
-
         body {
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            text-decoration: none;
+            color: #444;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
             overflow: hidden;
-            /* 深邃夜空背景 */
-            background: radial-gradient(circle at 50% 20%, #1b2735 0%, #090a0f 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            font-family: sans-serif;
-        }
-
-        /* --- 1. 性能优化的雪花画布 --- */
-        #snowCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* 关键：让鼠标穿透画布，不影响拖拽 */
-            z-index: 100;
-        }
-
-        /* --- 2. 圣诞树容器 --- */
-        .tree-container {
             position: relative;
-            width: 350px; /* 稍微调小一点适配移动端 */
-            height: 550px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 10;
-            animation: breeze 5s ease-in-out infinite;
-            transition: border 0.3s;
-            border: 2px dashed transparent;
-        }
-        .tree-container.highlight {
-            border: 2px dashed rgba(255, 255, 255, 0.6);
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
         }
 
-        @keyframes breeze {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(0.5deg); }
+        .card:active {
+            transform: scale(0.98);
         }
 
-        /* --- 树的层级 (使用CSS绘制) --- */
-        .layer {
-            position: absolute;
-            width: 0;
-            height: 0;
-            background: 
-                repeating-linear-gradient(115deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px),
-                linear-gradient(to right, var(--tree-green-light), var(--tree-green-dark));
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        /* 调整了尺寸以适应不同屏幕 */
-        .layer-top { bottom: 320px; width: 140px; height: 120px; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 3; }
-        .layer-middle { bottom: 200px; width: 220px; height: 160px; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 2; }
-        .layer-bottom { bottom: 70px; width: 300px; height: 180px; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 1; }
-
-        /* 树干 */
-        .trunk {
-            position: absolute;
-            bottom: 0;
-            width: 50px;
-            height: 90px;
-            background: linear-gradient(90deg, #5d4037, #3e2723);
-            border-radius: 5px;
-            z-index: 0;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        /* --- 装饰品样式 --- */
-        .ornament-item {
-            position: absolute;
-            cursor: grab;
-            z-index: 5;
+        .card-icon {
+            font-size: 3rem;
+            margin-right: 20px;
+            background: #f0f0f0;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.2s;
-        }
-        .ornament-item:active { cursor: grabbing; }
-        
-        /* 树顶星 (固定) */
-        .star-fixed {
-            position: absolute;
-            top: 75px; /* 调整位置 */
-            width: 50px; height: 50px;
-            background: radial-gradient(ellipse at center, #fff 0%, var(--gold) 60%, #daa520 100%);
-            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-            z-index: 20;
-            animation: glow 2s infinite alternate;
-            box-shadow: 0 0 20px var(--gold);
-        }
-        @keyframes glow {
-            from { filter: drop-shadow(0 0 5px var(--gold)); }
-            to { filter: drop-shadow(0 0 20px var(--gold)); }
         }
 
-        /* 图形绘制 */
-        .bell {
-            width: 28px; height: 28px;
-            background: linear-gradient(135deg, #e6ac00, #b8860b);
-            border-radius: 10px 10px 2px 2px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        .card-info h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #222;
         }
-        .cane {
-            width: 12px; height: 32px;
-            border-radius: 10px 10px 0 0;
-            border: 3px solid #d32f2f;
-            border-bottom: none; border-left: none;
-            background-image: repeating-linear-gradient(45deg, #fff, #fff 3px, transparent 3px, transparent 6px);
-        }
-        .gingerbread {
-            width: 28px; height: 36px;
-            background: #8d6e63;
-            border-radius: 50% 50% 5px 5px;
-            border: 1px solid #5d4037;
-        }
-        .gingerbread::before { content: ':'; color: white; position: absolute; top: 6px; font-size: 10px; transform: rotate(90deg); font-weight: bold;}
-        .gingerbread::after { content: '.'; color: red; position: absolute; top: 14px; font-size: 14px; }
-        .choco {
-            width: 24px; height: 24px;
-            background: radial-gradient(circle at 30% 30%, #8b4513, #3e2723);
-            border-radius: 50%;
-            border: 1px solid #a1887f;
-        }
-        .light {
-            width: 12px; height: 12px; border-radius: 50%;
-            background-color: currentColor;
-            box-shadow: 0 0 5px currentColor;
-            animation: twinkle 1.5s infinite alternate;
-        }
-        @keyframes twinkle {
-            0% { opacity: 0.5; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px currentColor; }
-        }
-        
-        .c-red { color: #ff4444; }
-        .c-yellow { color: #ffeb3b; }
-        .c-blue { color: #2196f3; }
 
-        /* --- 装饰品选择区 --- */
-        #ornament-palette {
-            position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 60px; /* 窄一点 */
-            padding: 10px;
-            background: var(--tool-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 80vh;
-            overflow-y: auto; /* 允许滚动 */
-            z-index: 110;
+        .card-info p {
+            margin: 5px 0 0 0;
+            font-size: 0.9rem;
+            color: #888;
         }
-        
-        .palette-item {
-            width: 50px; height: 50px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            display: flex; justify-content: center; align-items: center;
-            cursor: grab;
-            flex-shrink: 0;
-        }
-        /* 在选择栏里取消动画和阴影 */
-        .palette-item .ornament-item { position: relative; animation: none; box-shadow: none; transform: none; }
 
-        /* --- 控制面板 --- */
-        .controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            padding: 10px 20px;
-            border-radius: 30px;
-            color: white;
-            z-index: 120;
-            font-size: 14px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        input[type=range] { cursor: pointer; }
+        /* 颜色装饰 */
+        .tree-card .card-icon { background: #e8f5e9; color: #2e7d32; }
+        .butterfly-card .card-icon { background: #fce4ec; color: #ec407a; }
+        .windmill-card .card-icon { background: #e3f2fd; color: #2196f3; }
 
     </style>
 </head>
 <body>
 
-    <canvas id="snowCanvas"></canvas>
+    <h1>🎡 奇妙乐园</h1>
 
-    <div class="tree-container" id="treeContainer">
-        <div class="star-fixed"></div> <div class="layer layer-top"></div>
-        <div class="layer layer-middle"></div>
-        <div class="layer layer-bottom"></div>
-        <div class="trunk"></div>
-    </div>
-
-    <div id="ornament-palette">
-        <div class="palette-item" draggable="true" data-type="bell">
-            <div class="ornament-item bell"></div>
-        </div>
-        <div class="palette-item" draggable="true" data-type="cane">
-            <div class="ornament-item cane"></div>
-        </div>
-        <div class="palette-item" draggable="true" data-type="gingerbread">
-            <div class="ornament-item gingerbread"></div>
-        </div>
-        <div class="palette-item" draggable="true" data-type="choco">
-            <div class="ornament-item choco"></div>
-        </div>
-        <div class="palette-item" draggable="true" data-type="light" data-color="c-red">
-            <div class="ornament-item light c-red"></div>
-        </div>
-        <div class="palette-item" draggable="true" data-type="light" data-color="c-yellow">
-            <div class="ornament-item light c-yellow"></div>
-        </div>
-        <div class="palette-item" draggable="true" data-type="light" data-color="c-blue">
-            <div class="ornament-item light c-blue"></div>
-        </div>
-    </div>
-
-    <div class="controls">
-        <label>雪:</label>
-        <input type="range" id="snowRange" min="0" max="100" value="50">
-    </div>
-
-    <script>
-        // ================= 核心优化：Canvas 雪花逻辑 =================
-        const canvas = document.getElementById('snowCanvas');
-        const ctx = canvas.getContext('2d');
-        const snowRange = document.getElementById('snowRange');
+    <div class="menu-container">
         
-        let width = window.innerWidth;
-        let height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+        <a href="tree.html" class="card tree-card">
+            <div class="card-icon">🎄</div>
+            <div class="card-info">
+                <h2>神奇圣诞树</h2>
+                <p>下雪啦，快来装饰你的圣诞树！</p>
+            </div>
+        </a>
 
-        // 响应窗口大小
-        window.addEventListener('resize', () => {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
-        });
+        <a href="fans.html" class="card butterfly-card">
+            <div class="card-icon">🦋</div>
+            <div class="card-info">
+                <h2>飞舞的蝴蝶</h2>
+                <p>点一下，蝴蝶就会翩翩起舞哦。</p>
+            </div>
+        </a>
 
-        let snowflakes = [];
-        let maxSnowflakes = 300; // 初始数量
+        <a href="bubble.html" class="card windmill-card">
+            <div class="card-icon">🌬️</div>
+            <div class="card-info">
+                <h2>七彩大风车</h2>
+                <p>呼呼呼~ 它可以转得超级快！</p>
+            </div>
+        </a>
 
-        class Snowflake {
-            constructor() {
-                this.reset(true); // true 表示随机初始化Y轴
-            }
-            reset(initial = false) {
-                this.x = Math.random() * width;
-                this.y = initial ? Math.random() * height : -10; // 初始铺满，后续从顶部生成
-                this.vy = Math.random() * 2 + 1; // 下落速度
-                this.vx = Math.random() * 1 - 0.5; // 飘动
-                this.size = Math.random() * 3 + 1;
-                this.opacity = Math.random() * 0.5 + 0.3;
-            }
-            update() {
-                this.y += this.vy;
-                this.x += this.vx;
-                if (this.y > height) this.reset();
-                if (this.x > width) this.x = 0;
-                if (this.x < 0) this.x = width;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                ctx.fill();
-            }
-        }
+    </div>
 
-        // 动画循环
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-            snowflakes.forEach(f => {
-                f.update();
-                f.draw();
-            });
-            requestAnimationFrame(animate);
-        }
-
-        // 初始化雪花
-        function initSnow() {
-            snowflakes = [];
-            for(let i=0; i<maxSnowflakes; i++) snowflakes.push(new Snowflake());
-        }
-        
-        // 滑动条控制
-        snowRange.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            maxSnowflakes = val * 10; // 0-1000
-            // 动态增减数组
-            if (maxSnowflakes > snowflakes.length) {
-                for(let i=snowflakes.length; i<maxSnowflakes; i++) snowflakes.push(new Snowflake());
-            } else {
-                snowflakes.splice(maxSnowflakes);
-            }
-        });
-
-        initSnow();
-        animate();
-
-
-        // ================= 拖拽逻辑 (Drag and Drop) =================
-        const paletteItems = document.querySelectorAll('.palette-item');
-        const treeContainer = document.getElementById('treeContainer');
-        let draggedType = null;
-        let draggedColor = null;
-
-        // 1. 绑定选择区物品的拖拽开始
-        paletteItems.forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                draggedType = item.dataset.type;
-                draggedColor = item.dataset.color || '';
-                // 设置透明拖拽图，避免遮挡
-                const img = new Image();
-                img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                e.dataTransfer.setDragImage(img, 0, 0);
-            });
-        });
-
-        // 2. 树区域：进入、悬停、离开
-        treeContainer.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            treeContainer.classList.add('highlight');
-        });
-        treeContainer.addEventListener('dragover', (e) => {
-            e.preventDefault(); // 必须阻止默认才能drop
-        });
-        treeContainer.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            treeContainer.classList.remove('highlight');
-        });
-
-        // 3. 放置 (Drop)
-        treeContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            treeContainer.classList.remove('highlight');
-
-            if (!draggedType) return;
-
-            // 计算相对于树容器的坐标
-            const rect = treeContainer.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            createOrnament(draggedType, draggedColor, x, y);
-            
-            draggedType = null;
-            draggedColor = null;
-        });
-
-        // 在树上创建装饰品
-        function createOrnament(type, color, x, y) {
-            const el = document.createElement('div');
-            el.classList.add('ornament-item', type);
-            if (color) el.classList.add(color);
-
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-            // 随机旋转一点点，更自然
-            el.style.transform = `translate(-50%, -50%) rotate(${Math.random()*20-10}deg)`;
-
-            // 允许二次拖拽 (调整位置)
-            el.draggable = true;
-            el.addEventListener('dragstart', (e) => {
-                e.stopPropagation();
-                // 记录当前被拖拽的是自己
-                // 这里简化处理：实际上我们可以复用逻辑，
-                // 但为了简单，我们让它“先消失”，拖拽结束如果没放好可以重置（这里简化为销毁重创）
-                el.style.opacity = '0.5';
-            });
-            el.addEventListener('dragend', (e) => {
-                 // 如果放置失败或需要重置，可以在这里写逻辑
-                 el.style.opacity = '1';
-            });
-            
-            // 如果在树内部拖拽，其实需要更复杂的坐标计算，
-            // 这里为了代码简洁，建议直接从侧边栏拖新的。
-            
-            treeContainer.appendChild(el);
-        }
-
-    </script>
 </body>
 </html>
