@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>指尖泡泡</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #a1c4fd, #c2e9fb); /* 清新的蓝天背景 */
+            height: 100vh;
+            cursor: crosshair; /* 鼠标变成十字准星，提示点击 */
+            user-select: none; /* 防止双击选中文字 */
+        }
+
+        /* 提示文字 */
+        .hint {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-family: sans-serif;
+            font-size: 1.2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            /* 核心：逼真的虹彩渐变 */
+            background: radial-gradient(
+                130% 130% at 30% 30%, 
+                rgba(255, 255, 255, 0.95) 0%,    /* 强烈的高光点 */
+                rgba(255, 255, 255, 0.1) 25%,    /* 变得透明 */
+                rgba(255, 0, 255, 0.1) 40%,      /* 淡淡的粉紫 */
+                rgba(0, 255, 255, 0.1) 55%,      /* 淡淡的青色 */
+                rgba(255, 255, 0, 0.1) 70%,      /* 淡淡的黄色 */
+                rgba(255, 255, 255, 0.3) 85%,    /* 边缘反光 */
+                rgba(255, 255, 255, 0.6) 100%    /* 边缘轮廓 */
+            );
+            /* 增加边缘光晕和内部反射 */
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5);
+            /* 稍微模糊一点点，更有空气感 */
+            backdrop-filter: blur(1px); 
+            pointer-events: none; /* 让泡泡不影响鼠标点击，这样可以连续快速点击 */
+            transform-origin: center center;
+        }
+
+        /* 漂浮动画 */
+        @keyframes floatUp {
+            0% {
+                transform: translate(-50%, -50%) scale(0); /* 初始：在鼠标中心，大小为0 */
+                opacity: 0;
+            }
+            10% {
+                transform: translate(-50%, -50%) scale(1); /* 瞬间弹出 */
+                opacity: 1;
+            }
+            100% {
+                /* 最终：向上飘很远，并且横向偏移（由CSS变量控制） */
+                transform: translate(calc(-50% + var(--drift)), -120vh) scale(1);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hint">点击屏幕任意位置生成泡泡</div>
+
+    <script>
+        // 监听全局点击事件
+        document.addEventListener('click', function(e) {
+            createBubble(e.clientX, e.clientY);
+        });
+
+        // 为了增加趣味性，支持拖拽生成（按住鼠标移动）
+        let isDragging = false;
+        document.addEventListener('mousedown', () => isDragging = true);
+        document.addEventListener('mouseup', () => isDragging = false);
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                // 节流：每隔一点距离生成一个，防止太密集
+                if (Math.random() > 0.8) { 
+                    createBubble(e.clientX, e.clientY);
+                }
+            }
+        });
+
+        function createBubble(x, y) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+
+            // 1. 随机大小 (20px - 80px)
+            const size = Math.random() * 60 + 20;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+
+            // 2. 设置位置 (直接设为鼠标点击坐标)
+            bubble.style.left = `${x}px`;
+            bubble.style.top = `${y}px`;
+
+            // 3. 随机动画参数
+            // 飘动横移距离 (-100px 到 100px)
+            const drift = (Math.random() * 200 - 100) + 'px';
+            bubble.style.setProperty('--drift', drift);
+
+            // 上升速度 (越大的泡泡通常上升越慢，这里模拟 3s - 8s)
+            const duration = Math.random() * 5 + 3;
+            bubble.style.animation = `floatUp ${duration}s ease-in forwards`;
+
+            // 4. 添加到页面
+            document.body.appendChild(bubble);
+
+            // 5. 动画结束后自动清理 DOM，防止页面卡顿
+            bubble.addEventListener('animationend', () => {
+                bubble.remove();
+            });
+        }
+    </script>
+</body>
+</html>

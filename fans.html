@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>逼真的 CSS 3D 风车</title>
+    <style>
+        :root {
+            --speed: 2s; /* 默认旋转一圈的时间 */
+            /* 定义叶片颜色 */
+            --c-blue: #2196F3;
+            --c-yellow: #FFEB3B;
+            --c-red: #F44336;
+            --c-green: #4CAF50;
+            /* 阴影颜色，用于增强立体感 */
+            --shadow: rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom, #e0f7fa, #80deea);
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        /* 风车整体容器 */
+        .pinwheel-container {
+            position: relative;
+            width: 300px;
+            height: 500px; /* 包含手柄的高度 */
+            display: flex;
+            justify-content: center;
+            /* 这一步是为了让头部居中 */
+            align-items: flex-start; 
+            padding-top: 50px;
+        }
+
+        /* --- 1. 手柄 (The Stick) --- */
+        .stick {
+            position: absolute;
+            top: 150px; /* 插入到风车头部的后面 */
+            width: 12px;
+            height: 350px;
+            background: linear-gradient(90deg, #8d6e63, #5d4037 40%, #3e2723);
+            border-radius: 5px;
+            z-index: 0;
+            box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+        }
+
+        /* --- 2. 风车头部 (The Head - 旋转部分) --- */
+        .wheel {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            z-index: 10;
+            animation: spin var(--speed) linear infinite;
+            transform-origin: center center;
+            /* 鼠标悬停时加速 */
+            cursor: pointer;
+        }
+        
+        /* 悬停在容器上时，临时加速 (CSS 交互) */
+        .pinwheel-container:hover .wheel {
+            animation-duration: 0.5s; /* 快速旋转 */
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- 3. 叶片通用样式 (The Blades) --- */
+        .blade {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0% 0%; /* 以中心点为基准旋转 */
+        }
+
+        /* 叶片的内部构造：利用 mask 和 gradient 模拟卷曲 */
+        .blade-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 0 60px 10px 60px; /* 叶片形状：像泪滴 */
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1); /* 边缘微弱阴影 */
+        }
+
+        /* 模拟卷曲部分的高光和阴影 */
+        .blade-inner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* 这是一个关键的渐变：模拟叶片弯曲时的反光 */
+            background: linear-gradient(135deg, 
+                rgba(255,255,255,0.4) 0%, 
+                rgba(255,255,255,0) 40%, 
+                rgba(0,0,0,0.1) 100%);
+            pointer-events: none;
+        }
+        
+        /* 模拟折痕阴影 */
+        .blade-fold {
+            position: absolute;
+            width: 40%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+            transform-origin: top left;
+            transform: skewY(-10deg);
+            filter: blur(2px);
+        }
+
+        /* 四个叶片的具体位置和颜色 */
+        
+        /* 1. 蓝色 (右上) */
+        .blade:nth-child(1) {
+            transform: rotate(0deg);
+        }
+        .blade:nth-child(1) .blade-inner {
+            background-color: var(--c-blue);
+        }
+
+        /* 2. 黄色 (右下) */
+        .blade:nth-child(2) {
+            transform: rotate(90deg);
+        }
+        .blade:nth-child(2) .blade-inner {
+            background-color: var(--c-yellow);
+        }
+
+        /* 3. 红色 (左下) */
+        .blade:nth-child(3) {
+            transform: rotate(180deg);
+        }
+        .blade:nth-child(3) .blade-inner {
+            background-color: var(--c-red);
+        }
+
+        /* 4. 绿色 (左上) */
+        .blade:nth-child(4) {
+            transform: rotate(270deg);
+        }
+        .blade:nth-child(4) .blade-inner {
+            background-color: var(--c-green);
+        }
+
+        /* --- 4. 中心固定钉 (The Pin) --- */
+        .pin {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle at 30% 30%, #fff, #cfd8dc, #546e7a);
+            border-radius: 50%;
+            z-index: 20;
+            box-shadow: 1px 2px 3px rgba(0,0,0,0.3);
+        }
+
+        /* --- 控制面板 --- */
+        .controls {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 200px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pinwheel-container">
+        <div class="stick"></div>
+        
+        <div class="wheel" id="wheel">
+            <div class="blade">
+                <div class="blade-inner">
+                    <div class="blade-fold"></div>
+                </div>
+            </div>
+            <div class="blade">
+                <div class="blade-inner">
+                    <div class="blade-fold"></div>
+                </div>
+            </div>
+            <div class="blade">
+                <div class="blade-inner">
+                    <div class="blade-fold"></div>
+                </div>
+            </div>
+            <div class="blade">
+                <div class="blade-inner">
+                    <div class="blade-fold"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pin"></div>
+    </div>
+
+    <div class="controls">
+        <label for="speedControl">风速控制 (Wind Speed)</label>
+        <input type="range" id="speedControl" min="1" max="20" value="5">
+        <div style="font-size: 12px; color: #666; margin-top:5px;">(或者将鼠标悬停在风车上加速)</div>
+    </div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        const speedControl = document.getElementById('speedControl');
+        const root = document.documentElement;
+
+        // 监听滑动条变化
+        speedControl.addEventListener('input', (e) => {
+            const val = e.target.value;
+            // 值越大，速度越快（时间越短）
+            // 公式：基础时间 / 滑动条的值
+            const newDuration = (3 / val) + 's';
+            root.style.setProperty('--speed', newDuration);
+        });
+
+        // 初始化一个随机的小偏移，让它看起来更自然
+        speedControl.value = 5;
+        root.style.setProperty('--speed', '0.6s');
+    </script>
+
+</body>
+</html>
